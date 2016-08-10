@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<cinder>
+<block
+	name="Cinder-Cardboard"
+	id="com.solid-jellyfish.cardboard"
+	author="Seph Li"
+	license="BSD"
+	summary="Port of Google's Cardboard VR to use with Cinder."
+	core="false"
+    >
+    <sourcePattern>src/*.cpp</sourcePattern>
+	<headerPattern>src/*.h</headerPattern>
+	<includePath>src</includePath>
+</block>
+</cinder>
