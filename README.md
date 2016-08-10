@@ -12,8 +12,10 @@ All code has been wrapped inside cinder::cardboard.
 #####Usage
 This block need to be used with the MotionManager block at the same time. Though if you only want to test the lens distortion, this block will run on desktop devices as well.
 
+
+####User Vertex Distortion
+
 #####Initialization
-If you want to use vertex distorter:
 ```c++
 void VRApp:setup(){
   mHmd = Hmd::create(CardboardVersion::VERSION_2, true);
@@ -33,12 +35,48 @@ gl_Position = Distort(position);
 ```
 to distort your vertex positions. 
 
-If you want to use fragment distortions:
+#####Render
+The benefit of using vertex distortion is it doesn't need an FBO, so you could do rendering by only 1 pass.
+```c++
+void VRApp:drawp(){
+  mHmd->bindEye(Eye::LEFT);
+  mDistorter->setDistortionUniforms(mShader); //this will set distortion uniforms
+  drawScene(); //draw you objects
+    
+  mHmd->bindEye(Eye::RIGHT);
+  mDistorter->setDistortionUniforms(mShader);
+  drawScene();
+    
+  mHmd->unbind(); //unbind hmd to restore 2D viewport/matrices
+}
+```
+
+
+####Use Fragment Distortion
+
+#####Initialization
 ```c++
 void VRApp:setup(){
   mHmd = Hmd::create(CardboardVersion::VERSION_2, false);
 }
 ```
 
-
-
+#####Render scene
+When using fragment distortion, you need to draw your scenes firstly into the fbo.
+```c++
+void VRApp:update(){
+  //bing and draw for each eye
+  mHmd->bindEye(Eye::LEFT);
+  drawScene();
+  mHmd->bindEye(Eye::RIGHT);
+  drawScene();
+  //unbind hmd so it unbind the fbo internally
+  mHmd->unbind();
+}
+```
+And then you need to draw the output fbo inside the draw function
+```c++
+void VRApp:draw(){
+  mHmd->render();
+}
+```
