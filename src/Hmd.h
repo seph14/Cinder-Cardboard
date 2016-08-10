@@ -54,7 +54,9 @@ namespace cinder { namespace cardboard {
         
         void setDefaultDirection(ci::vec3 direction);
         
+#if defined( CINDER_GL_ES )
         void updateCamera(app::InterfaceOrientation orientation);
+#endif
         CameraStereo getCamera() { return mCamera; }
         
         void bindEye(Eye eye);

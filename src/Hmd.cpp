@@ -236,14 +236,14 @@ Hmd::~Hmd(){
     
 }
 
-void Hmd::updateCamera(app::InterfaceOrientation orientation){
 #if defined( CINDER_GL_ES )
+void Hmd::updateCamera(app::InterfaceOrientation orientation){
     //TODO: setting to landscape left seems to break the orientation,
     //not sure if this is related to motion manager
     if( ! MotionManager::isEnabled() ) return;
     mCamera.setOrientation( MotionManager::getRotation( orientation ) );
-#endif
 }
+#endif
 
 void Hmd::setDefaultDirection(ci::vec3 direction){
     //TODO: save a copy of default relative, or save a model matrix?
