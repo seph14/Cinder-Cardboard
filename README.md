@@ -13,6 +13,7 @@ This block need to be used with the MotionManager block at the same time. Though
 
 
 ####User Vertex Distortion
+![Image](/screenshots/vertex_distortion.png)
 
 #####Initialization
 ```c++
@@ -52,6 +53,7 @@ void VRApp:drawp(){
 
 
 ####Use Fragment Distortion
+![Image](/screenshots/fragment_distortion.png)
 
 #####Initialization
 ```c++
@@ -79,3 +81,6 @@ void VRApp:draw(){
   mHmd->render();
 }
 ```
+
+####Note
+Vertex and Fragment distortion usually yields different results. See the reading [VR DISTORTION CORRECTION USING VERTEX DISPLACEMENT](https://ustwo.com/blog/vr-distortion-correction-using-vertex-displacement), so this is uninteded that you mix 2 methods at the sametime. Therefore once the Hmd is created, you can not change the distortion method. 
