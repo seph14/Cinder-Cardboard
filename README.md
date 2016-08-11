@@ -1,7 +1,6 @@
 # Cinder-Cardboard
-use Cinder with Google Cardboard VR
 
-####[Google Cardboard VRview](https://github.com/google/vrview) wrapped for use with Cinder 0.9.
+####[Google Cardboard VRview](https://github.com/google/vrview) exported to C++ for use with Cinder 0.9.
 
 This block is designed to quickly build/test out VR apps with Cinder for iOS. (Android helps are welcome.)
 The block supports both vertex distortion and fragment distortion. For more information on these 2 different methods, please read: [VR DISTORTION CORRECTION USING VERTEX DISPLACEMENT](https://ustwo.com/blog/vr-distortion-correction-using-vertex-displacement)
