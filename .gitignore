@@ -1,0 +1,4 @@
+/samples/VertexDistortion/xcode/build/*
+/samples/VertexDistortion/xcode_ios/build/*
+/samples/FragmentDistortion/xcode/build/*
+/samples/FragmentDistortion/xcode_ios/build/*

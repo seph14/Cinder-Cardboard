@@ -142,6 +142,10 @@ using namespace ci::cardboard;
 using namespace ci::gl;
 using namespace ci::app;
 
+// Constants from vrtoolkit: https://github.com/googlesamples/cardboard-java.
+//static const float DEFAULT_INTERPUPILLARY_DISTANCE = 0.06f;
+//static const float DEFAULT_FIELD_OF_VIEW = 40.f;
+
 //TODO: this is not the best way to init structs, try find a better way
 static const CardboardParams CardboardV2 = CardboardParams{
     "Cardboard-V2",
@@ -171,7 +175,27 @@ CardboardParams CardboardV1 = CardboardParams{
     }
 };
 
+Hmd::Hmd(CardboardParams params, bool initVertexDistortion){
+    init(params, initVertexDistortion);
+}
+
 Hmd::Hmd(CardboardVersion version, bool initVertexDistortion){
+    CardboardParams params;
+    
+    if(version == VERSION_2){
+        params = CardboardV2;
+    }else{
+        params = CardboardV1;
+    }
+    
+    init(params, initVertexDistortion);
+}
+
+Hmd::~Hmd(){
+    
+}
+
+void Hmd::init(CardboardParams params, bool initVertexDistortion){
     int scrWidth = toPixels(getWindowWidth());
     int scrHeight= toPixels(getWindowHeight());
     if(scrWidth < scrHeight){
@@ -188,14 +212,6 @@ Hmd::Hmd(CardboardVersion version, bool initVertexDistortion){
     mHeightMeters= metersPerPixelY * scrHeight;
     mBevelMeters = 0.003f;
     
-    CardboardParams params;
-    
-    if(version == VERSION_2){
-        params = CardboardV2;
-    }else{
-        params = CardboardV1;
-    }
-    
     mDeviceName = params.DeviceName;
     mFov = params.Fov;
     mInterLensDistance = params.InterLensDistance;
@@ -206,9 +222,13 @@ Hmd::Hmd(CardboardVersion version, bool initVertexDistortion){
     
     gl::enableVerticalSync(false);
     setFrameRate(60.f);
+    mBackgroundColor = Color::black();
     
 #if defined( CINDER_GL_ES )
     MotionManager::enable( 60.0f );
+    mMotionReady = false;
+#else
+    mMotionReady = true;
 #endif
     
     if(!initVertexDistortion){
@@ -219,35 +239,38 @@ Hmd::Hmd(CardboardVersion version, bool initVertexDistortion){
         gl::Texture2d::Format tfmt;
         tfmt.setMinFilter( GL_NEAREST );
         tfmt.setMagFilter( GL_NEAREST );
-        //tfmt.setInternalFormat( GL_RGBA8 );
-        //tfmt.setInternalFormat(GL_RGBA8_OES);
         gl::Fbo::Format fmt;
         fmt.setColorTextureFormat( tfmt );
         fmt.depthTexture();
         mRenderBuffer = gl::Fbo::create( scrWidth, scrHeight, fmt );
     }
     mUseVertexDistorter = initVertexDistortion;
-    //is 80 fov correct?
-    mCamera.setPerspective(80.f, scrWidth/2.f/scrHeight, 0.1f, 1000.0f);
-    mCamera.lookAt( vec3( 0.f ), vec3( 0.f, 0.f, -1.0f ) );
-}
-
-Hmd::~Hmd(){
     
+    //is 80 fov correct?
+    mCamera.setPerspective(80.f, 0.5f*scrWidth/scrHeight, 0.1f, 1000.0f);
+    mCamera.lookAt( vec3( 0.f ), vec3( 0.f, 0.f, -1.0f ) );
+    mCamera.setEyeSeparation(mInterLensDistance);
+    mDefaultAngle = 0.f;
 }
 
 #if defined( CINDER_GL_ES )
 void Hmd::updateCamera(app::InterfaceOrientation orientation){
-    //TODO: setting to landscape left seems to break the orientation,
-    //not sure if this is related to motion manager
     if( ! MotionManager::isEnabled() ) return;
     mCamera.setOrientation( MotionManager::getRotation( orientation ) );
+    if(!mMotionReady && MotionManager::isDataAvailable()){
+        mMotionReady = true;
+        auto vec = mCamera.getViewDirection();
+        float ang = toRadians(glm::atan(vec.z, vec.x));
+        mDefaultAngle = mDefaultAngle - ang;
+    }
 }
 #endif
 
-void Hmd::setDefaultDirection(ci::vec3 direction){
-    //TODO: save a copy of default relative, or save a model matrix?
-    //mCamera.setViewDirection(direction);
+void Hmd::setDefaultDirection(float angle){
+#if defined( CINDER_GL_ES )
+    if(!mMotionReady)
+#endif
+        mDefaultAngle = toRadians(angle);
 }
 
 const vec4 Hmd::projectionMatrixToVector(mat4 mat){
@@ -290,6 +313,7 @@ void Hmd::bindEye(Eye eye){
 
     mCurrEye = eye;
     gl::setMatrices( mCamera );
+    gl::rotate(mDefaultAngle,vec3(0,1,0));
 }
 
 void Hmd::unbind(){
@@ -343,7 +367,7 @@ void Hmd::updateBarrelUniforms(){
     
     mBarrelDistortionShader->uniform("distortion", vec2(mDistortionCoefficients[0],
                                                         mDistortionCoefficients[1]));
-    mBarrelDistortionShader->uniform("backgroundColor", vec4(0,0,0,1));
+    mBarrelDistortionShader->uniform("backgroundColor", vec4(mBackgroundColor.r,mBackgroundColor.g,mBackgroundColor.b,1.f));
     mBarrelDistortionShader->uniform("projectionLeft", projectionLeft);
     mBarrelDistortionShader->uniform("unprojectionLeft", unprojLeft);
     mBarrelDistortionShader->uniform("tex0", 0);

@@ -53,6 +53,8 @@ void VertexDistortionApp::setup()
     mTeapot = gl::Batch::create(geom::Teapot(), mShader);
     mTorus = gl::Batch::create(geom::Torus().subdivisionsHeight(12).subdivisionsAxis(6), mShader);
     mWiredPlane = gl::Batch::create(geom::WirePlane().subdivisions(vec2(16)).size(vec2(6.f)), mGridShader);
+    
+    mHmd->setDefaultDirection(90.f);
 }
 
 void VertexDistortionApp::mouseDown( MouseEvent event )

@@ -48,11 +48,13 @@ namespace cinder { namespace cardboard {
     class Hmd{
     public:
         Hmd(CardboardVersion version = VERSION_2, bool initVertexDistortion = true);
+        Hmd(CardboardParams params, bool initVertexDistortion = true);
         ~Hmd();
         
         static HmdRef create(CardboardVersion version = VERSION_2, bool initVertexDistortion = true);
         
-        void setDefaultDirection(ci::vec3 direction);
+        void setDefaultDirection(float angle);
+        void setBackgroundColor(ci::Color color) { mBackgroundColor = color;}
         
 #if defined( CINDER_GL_ES )
         void updateCamera(app::InterfaceOrientation orientation);
@@ -62,16 +64,20 @@ namespace cinder { namespace cardboard {
         void bindEye(Eye eye);
         void unbind();
         void render();
+        
         const std::string getDeviceName(){ return mDeviceName; }
         
         VertexDistorterRef getVertexDistorter();
         
     protected:
+        bool mMotionReady;
         ci::CameraStereo mCamera;
+        float mDefaultAngle;
         
         std::string mDeviceName;
         
         bool                mUseVertexDistorter;
+        ci::Color           mBackgroundColor;
         VertexDistorterRef  mDistorter;
         ci::gl::GlslProgRef mBarrelDistortionShader;
         ci::gl::FboRef      mRenderBuffer;
@@ -88,6 +94,8 @@ namespace cinder { namespace cardboard {
         
         std::array<float,2>  mDistortionCoefficients;
         std::array<float,12> mInverseCoefficients;
+        
+        void init(CardboardParams params, bool initVertexDistortion);
         
         const vec4 projectionMatrixToVector(mat4 mat);
         void updateBarrelUniforms();
