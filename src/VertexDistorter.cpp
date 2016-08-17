@@ -87,11 +87,11 @@ static const char* DistortionInclude =
 "   return vec4(distortedPointNdc, 1.0) * point.w;\n"
 "}\n";
 
-VertexDistorter::VertexDistorter(std::array<float,12> distortionCoefficients){
+VertexDistorter::VertexDistorter(const std::array<float,12> &distortionCoefficients){
     mDistortionCoefficients = distortionCoefficients;
 }
 
-void VertexDistorter::updateWithFov(std::array<float,4> fov){
+void VertexDistorter::updateWithFov(const std::array<float,4> &fov){
     float maxFov = hypotf(glm::tan(toRadians(glm::max(fov[0], fov[1]))),
                           glm::tan(toRadians(glm::max(fov[2], fov[3]))));
     mMaxFovSquared = maxFov * maxFov;

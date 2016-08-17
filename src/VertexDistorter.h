@@ -48,9 +48,9 @@ protected:
     ci::vec2 mDistortionFovScale;
     
 public:
-    VertexDistorter(std::array<float,12> distortionCoefficients);
+    VertexDistorter(const std::array<float,12> &distortionCoefficients);
     
-    void updateWithFov(std::array<float,4> fov);
+    void updateWithFov(const std::array<float,4> &fov);
     
     const ci::gl::GlslProgRef createDistortionShader(const ci::DataSourceRef &vert,
                                                      const ci::DataSourceRef &frag);

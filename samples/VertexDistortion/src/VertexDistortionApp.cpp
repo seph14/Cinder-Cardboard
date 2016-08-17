@@ -2,6 +2,8 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 
+#include "cinder/Utilities.h"
+
 #include "Hmd.h"
 #include "VertexDistorter.h"
 
@@ -54,7 +56,10 @@ void VertexDistortionApp::setup()
     mTorus = gl::Batch::create(geom::Torus().subdivisionsHeight(12).subdivisionsAxis(6), mShader);
     mWiredPlane = gl::Batch::create(geom::WirePlane().subdivisions(vec2(16)).size(vec2(6.f)), mGridShader);
     
-    mHmd->setDefaultDirection(90.f);
+    //this will make sure you are always facing the cube regardless direction your device is point at when apps starts.
+    //you can comment this line to see the difference.
+    //this will be helpful if you want your users to see a specific 3d scene regardless direction they are facing to.
+    mHmd->setDefaultDirection(0.f);
 }
 
 void VertexDistortionApp::mouseDown( MouseEvent event )
@@ -114,27 +119,31 @@ void VertexDistortionApp::draw()
 {
 	gl::clear(Color(0,0,0));
     
-    mShader->uniform("uLightPosition",mLightWorldPosition);
-    mShader->uniform("uSkyDirection", vec4(0,1,0,0));
-    gl::enableDepthRead();
-    gl::enableDepthWrite();
-    
-    mHmd->bindEye(Eye::LEFT);
-    //this will set the distortion uniforms for you
-    mDistorter->setDistortionUniforms(mShader);
-    mDistorter->setDistortionUniforms(mGridShader);
-    drawScene();
-    
-    mHmd->bindEye(Eye::RIGHT);
-    mDistorter->setDistortionUniforms(mShader);
-    mDistorter->setDistortionUniforms(mGridShader);
-    drawScene();
-    
-    mHmd->unbind();
+    if(mHmd->hasDirectionApplied()){
+        mShader->uniform("uLightPosition",mLightWorldPosition);
+        mShader->uniform("uSkyDirection", vec4(0,1,0,0));
+        gl::enableDepthRead();
+        gl::enableDepthWrite();
+        
+        mHmd->bindEye(Eye::LEFT);
+        //this will set the distortion uniforms for you
+        mDistorter->setDistortionUniforms(mShader);
+        mDistorter->setDistortionUniforms(mGridShader);
+        drawScene();
+        
+        mHmd->bindEye(Eye::RIGHT);
+        mDistorter->setDistortionUniforms(mShader);
+        mDistorter->setDistortionUniforms(mGridShader);
+        drawScene();
+        
+        mHmd->unbind();
+    }else{
+        gl::setMatricesWindow(toPixels(getWindowSize()));
+    }
     
     gl::disableDepthRead();
     gl::disableDepthWrite();
-    gl::color( Color::white() );
+    gl::color(Color::white());
     auto x = toPixels(getWindowWidth())/2.f;
     gl::drawLine(vec2(x,0), vec2(x,toPixels(getWindowHeight())));
 }

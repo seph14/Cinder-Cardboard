@@ -146,6 +146,9 @@ using namespace ci::app;
 //static const float DEFAULT_INTERPUPILLARY_DISTANCE = 0.06f;
 //static const float DEFAULT_FIELD_OF_VIEW = 40.f;
 
+static const int SKIP_UNSTABLE_FRAMES = 30;
+static const int CALC_MOTION_FRAMES = 5;
+
 //TODO: this is not the best way to init structs, try find a better way
 static const CardboardParams CardboardV2 = CardboardParams{
     "Cardboard-V2",
@@ -250,27 +253,53 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
     mCamera.setPerspective(80.f, 0.5f*scrWidth/scrHeight, 0.1f, 1000.0f);
     mCamera.lookAt( vec3( 0.f ), vec3( 0.f, 0.f, -1.0f ) );
     mCamera.setEyeSeparation(mInterLensDistance);
-    mDefaultAngle = 0.f;
+    
+    //change the parameter here to set with different initial direction
+    mDefaultAngle = glm::atan(-1.f, 0.f);
+    mDefaultAngle = (mDefaultAngle > 0 ? mDefaultAngle : (2*M_PI + mDefaultAngle));
+    
+    mInitDirection = vec3(0.f);
+    mMotionCount = 0;
 }
 
 #if defined( CINDER_GL_ES )
-void Hmd::updateCamera(app::InterfaceOrientation orientation){
-    if( ! MotionManager::isEnabled() ) return;
+void Hmd::updateCamera(const app::InterfaceOrientation &orientation){
+    if( !MotionManager::isEnabled()) return;
+    
     mCamera.setOrientation( MotionManager::getRotation( orientation ) );
-    if(!mMotionReady && MotionManager::isDataAvailable()){
-        mMotionReady = true;
-        auto vec = mCamera.getViewDirection();
-        float ang = toRadians(glm::atan(vec.z, vec.x));
-        mDefaultAngle = mDefaultAngle - ang;
+    if(mDesiredDirectionApplied && !mMotionReady && MotionManager::isDataAvailable()){
+        mMotionCount += 1;
+        //skip first few unstable frames to get the correct initial facing direction
+        if(mMotionCount > SKIP_UNSTABLE_FRAMES)
+            mInitDirection += mCamera.getViewDirection();
+        if(mMotionCount >= CALC_MOTION_FRAMES + SKIP_UNSTABLE_FRAMES){
+            mInitDirection /= CALC_MOTION_FRAMES;
+            float ang = glm::atan(mInitDirection.z, mInitDirection.x);
+            ang = (ang > 0 ? ang : (2*M_PI + ang));
+            mDefaultAngle = mDesiredDirection + mDefaultAngle - ang;
+            mMotionReady = true;
+        }
     }
 }
 #endif
 
+bool Hmd::hasDirectionApplied(){
+    return (mMotionReady && mDesiredDirectionApplied) || !mDesiredDirectionApplied;
+}
+
 void Hmd::setDefaultDirection(float angle){
 #if defined( CINDER_GL_ES )
-    if(!mMotionReady)
-#endif
+    if(!mMotionReady){
+        mDesiredDirectionApplied = true;
+        mDesiredDirection = toRadians(angle);
+    }
+#else
+    if(!mMotionReady){
+        mDesiredDirectionApplied = true;
+        mMotionReady = true;
         mDefaultAngle = toRadians(angle);
+    }
+#endif
 }
 
 const vec4 Hmd::projectionMatrixToVector(mat4 mat){
@@ -313,7 +342,8 @@ void Hmd::bindEye(Eye eye){
 
     mCurrEye = eye;
     gl::setMatrices( mCamera );
-    gl::rotate(mDefaultAngle,vec3(0,1,0));
+    if(mMotionReady && mDesiredDirectionApplied)
+        gl::rotate(mDefaultAngle,vec3(0,1,0));
 }
 
 void Hmd::unbind(){
