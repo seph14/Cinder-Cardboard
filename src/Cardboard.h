@@ -35,6 +35,18 @@ namespace cinder { namespace cardboard {
         VERSION_2 = 0x40000002
     };
     
+    /*enum DeviceType{
+        Nexus5,
+        Nexus6,
+        GalaxyS6,
+        GalaxyNote4,
+        LGG3,
+        ihone4,
+        iPhone5,
+        iPhone6,
+        iPhone6Plus
+    };*/
+    
     enum Eye{
         LEFT = 0,
         RIGHT = 1,
@@ -49,6 +61,12 @@ namespace cinder { namespace cardboard {
         float ScreenLensDistance;
         std::array<float,2> DistortionCoefficients;
         std::array<float,12> InverseCoefficients;
+    };
+    
+    struct Device{
+        float width;
+        float height;
+        float border;
     };
 
 }}

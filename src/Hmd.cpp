@@ -60,7 +60,7 @@ static const char* BarrelDistortionFrag =
 "varying highp vec2 TexCoord;\n"
 
 "float poly(float val) {\n"
-"   return (val < 0.00010) ? 10000.0 : (1.0 + (distortion.x + distortion.y * val) * val);\n"
+"   return (val < 0.0000010) ? 10000.0 : (1.0 + (distortion.x + distortion.y * val) * val);\n"
 "}\n"
 
 "vec2 barrel(vec2 v, vec4 projection, vec4 unprojection) {\n"
@@ -109,7 +109,7 @@ static const char* BarrelDistortionFrag =
 "out vec4 oColor;\n"
 
 "float poly(float val) {\n"
-"   return (val < 0.00010) ? 10000.0 : (1.0 + (distortion.x + distortion.y * val) * val);\n"
+"   return (val < 0.0000010) ? 10000.0 : (1.0 + (distortion.x + distortion.y * val) * val);\n"
 "}\n"
 
 "vec2 barrel(vec2 v, vec4 projection, vec4 unprojection) {\n"
@@ -178,6 +178,60 @@ CardboardParams CardboardV1 = CardboardParams{
     }
 };
 
+Device Nexus5 = Device{
+    0.110f,
+    0.062f,
+    0.004f
+};
+
+Device Nexus6 = Device {
+    0.133f,
+    0.074f,
+    0.004f
+};
+
+Device GalaxyS6 = Device {
+    0.114f,
+    0.0635f,
+    0.0035f
+};
+
+Device GalaxyNote4 = Device {
+    0.125f,
+    0.0705f,
+    0.0045f
+};
+
+Device LGG3 = Device {
+    0.121f,
+    0.068f,
+    0.003f
+};
+
+Device iPhone4 = Device {
+    0.075f,
+    0.050f,
+    0.0045f
+};
+
+Device iPhone5 = Device {
+    0.089f,
+    0.050f,
+    0.0045f
+};
+
+Device iPhone6 = Device {
+    0.104f,
+    0.058f,
+    0.005f
+};
+
+Device iPhone6p = Device {
+    0.112f,
+    0.068f,
+    0.005f
+};
+
 Hmd::Hmd(CardboardParams params, bool initVertexDistortion){
     init(params, initVertexDistortion);
 }
@@ -207,14 +261,6 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
         scrWidth = tmp;
     }
     
-    const float METERS_PER_INCH = 0.0254f;
-    const float metersPerPixelX = METERS_PER_INCH / 317.1f;
-    const float metersPerPixelY = METERS_PER_INCH / 320.2f;
-    
-    mWidthMeters = metersPerPixelX * scrWidth;
-    mHeightMeters= metersPerPixelY * scrHeight;
-    mBevelMeters = 0.003f;
-    
     mDeviceName = params.DeviceName;
     mFov = params.Fov;
     mInterLensDistance = params.InterLensDistance;
@@ -230,8 +276,32 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
 #if defined( CINDER_GL_ES )
     MotionManager::enable( 60.0f );
     mMotionReady = false;
+    if(scrWidth < 1000){
+        mWidthMeters = iPhone4.width;
+        mHeightMeters= iPhone4.height;
+        mBevelMeters = iPhone4.border;
+    }else if(scrWidth < 1200){
+        mWidthMeters = iPhone5.width;
+        mHeightMeters= iPhone5.height;
+        mBevelMeters = iPhone5.border;
+    }else if(scrWidth < 1400){
+        mWidthMeters = iPhone6.width;
+        mHeightMeters= iPhone6.height;
+        mBevelMeters = iPhone6.border;
+    }else{
+        mWidthMeters = iPhone6p.width;
+        mHeightMeters= iPhone6p.height;
+        mBevelMeters = iPhone6p.border;
+    }
 #else
     mMotionReady = true;
+    const float METERS_PER_INCH = 0.0254f;
+    const float metersPerPixelX = METERS_PER_INCH / 317.1f;
+    const float metersPerPixelY = METERS_PER_INCH / 320.2f;
+     
+    mWidthMeters = metersPerPixelX * scrWidth;
+    mHeightMeters= metersPerPixelY * scrHeight;
+    mBevelMeters = 0.003f;
 #endif
     
     if(!initVertexDistortion){
@@ -250,7 +320,7 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
     mUseVertexDistorter = initVertexDistortion;
     
     //is 80 fov correct?
-    mCamera.setPerspective(80.f, 0.5f*scrWidth/scrHeight, 0.1f, 1000.0f);
+    mCamera.setPerspective(80.f, 0.5f*scrWidth/scrHeight, 0.1f, 100000.0f);
     mCamera.lookAt( vec3( 0.f ), vec3( 0.f, 0.f, -1.0f ) );
     mCamera.setEyeSeparation(mInterLensDistance);
     
