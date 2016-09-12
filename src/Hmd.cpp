@@ -178,59 +178,16 @@ CardboardParams CardboardV1 = CardboardParams{
     }
 };
 
-Device Nexus5 = Device{
-    0.110f,
-    0.062f,
-    0.004f
-};
+Device Nexus5 = Device{ 0.110f, 0.062f, 0.004f };
+Device Nexus6 = Device { 0.133f, 0.074f, 0.004f };
+Device GalaxyS6 = Device { 0.114f, 0.0635f, 0.0035f };
+Device GalaxyNote4 = Device { 0.125f, 0.0705f, 0.0045f };
+Device LGG3 = Device { 0.121f, 0.068f, 0.003f };
 
-Device Nexus6 = Device {
-    0.133f,
-    0.074f,
-    0.004f
-};
-
-Device GalaxyS6 = Device {
-    0.114f,
-    0.0635f,
-    0.0035f
-};
-
-Device GalaxyNote4 = Device {
-    0.125f,
-    0.0705f,
-    0.0045f
-};
-
-Device LGG3 = Device {
-    0.121f,
-    0.068f,
-    0.003f
-};
-
-Device iPhone4 = Device {
-    0.075f,
-    0.050f,
-    0.0045f
-};
-
-Device iPhone5 = Device {
-    0.089f,
-    0.050f,
-    0.0045f
-};
-
-Device iPhone6 = Device {
-    0.104f,
-    0.058f,
-    0.005f
-};
-
-Device iPhone6p = Device {
-    0.112f,
-    0.068f,
-    0.005f
-};
+Device iPhone4 = Device { 0.075f, 0.050f, 0.0045f };
+Device iPhone5 = Device { 0.089f, 0.050f, 0.0045f };
+Device iPhone6 = Device { 0.104f, 0.058f, 0.005f };
+Device iPhone6p = Device { 0.112f, 0.068f, 0.005f };
 
 Hmd::Hmd(CardboardParams params, bool initVertexDistortion){
     init(params, initVertexDistortion);
@@ -310,8 +267,8 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
         updateBarrelUniforms();
         
         gl::Texture2d::Format tfmt;
-        tfmt.setMinFilter( GL_NEAREST );
-        tfmt.setMagFilter( GL_NEAREST );
+        tfmt.setMinFilter( GL_LINEAR );
+        tfmt.setMagFilter( GL_LINEAR );
         gl::Fbo::Format fmt;
         fmt.setColorTextureFormat( tfmt );
         fmt.depthTexture();
@@ -320,7 +277,7 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
     mUseVertexDistorter = initVertexDistortion;
     
     //is 80 fov correct?
-    mCamera.setPerspective(80.f, 0.5f*scrWidth/scrHeight, 0.1f, 100000.0f);
+    mCamera.setPerspective(68.07361f, 0.5f*scrWidth/scrHeight, 0.3f, 1000.0f);
     mCamera.lookAt( vec3( 0.f ), vec3( 0.f, 0.f, -1.0f ) );
     mCamera.setEyeSeparation(mInterLensDistance);
     
