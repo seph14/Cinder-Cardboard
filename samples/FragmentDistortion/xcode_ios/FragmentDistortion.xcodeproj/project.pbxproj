@@ -373,11 +373,11 @@
 				GCC_PREFIX_HEADER = FragmentDistortion_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"\"$(CINDER_PATH)/lib/libcinder-iphone_d.a\"",
+					"\"$(CINDER_PATH)/lib/ios/Debug/libcinder.a\"",
 					"-lz",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*][arch=*]" = (
-					"\"$(CINDER_PATH)/lib/libcinder-iphone-sim_d.a\"",
+					"\"$(CINDER_PATH)/lib/ios-sim/Debug/libcinder.a\"",
 					"-lz",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = net.lastclock.ios;
@@ -394,11 +394,11 @@
 				GCC_PREFIX_HEADER = FragmentDistortion_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"\"$(CINDER_PATH)/lib/libcinder-iphone.a\"",
+					"\"$(CINDER_PATH)/lib/ios/Release/libcinder.a\"",
 					"-lz",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*][arch=*]" = (
-					"\"$(CINDER_PATH)/lib/libcinder-iphone-sim.a\"",
+					"\"$(CINDER_PATH)/lib/ios-sim/Release/libcinder.a\"",
 					"-lz",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = net.lastclock.ios;

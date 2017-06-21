@@ -1,21 +1,21 @@
 # Cinder-Cardboard
 
-####[Google Cardboard VRview](https://github.com/google/vrview) exported to C++ for use with Cinder 0.9.
+#### [Google Cardboard VRview](https://github.com/google/vrview) exported to C++ for use with Cinder 0.9.
 
 This block is designed to quickly build/test out VR apps with Cinder for iOS. (Android helps are welcome.)
 The block supports both vertex distortion and fragment distortion. For more information on these 2 different methods, please read: [VR DISTORTION CORRECTION USING VERTEX DISPLACEMENT](https://ustwo.com/blog/vr-distortion-correction-using-vertex-displacement)
 
-#####Namespace
+##### Namespace
 All code has been wrapped inside cinder::cardboard.
 
-#####Usage
+##### Usage
 This block need to be used with the MotionManager block at the same time. Though if you only want to test the lens distortion, this block will run on desktop devices as well.
 
 
-####User Vertex Distortion
+#### User Vertex Distortion
 ![Image](/screenshots/vertex_distortion.png)
 
-#####Initialization
+##### Initialization
 ```c++
 void VRApp:setup(){
   mHmd = Hmd::create(CardboardVersion::VERSION_2, true);
@@ -35,7 +35,7 @@ gl_Position = Distort(position);
 ```
 to distort your vertex positions. 
 
-#####Render
+##### Render
 The benefit of using vertex distortion is it doesn't need an FBO, so you could do rendering by only 1 pass.
 ```c++
 void VRApp:drawp(){
@@ -51,18 +51,17 @@ void VRApp:drawp(){
 }
 ```
 
-
-####Use Fragment Distortion
+#### Use Fragment Distortion
 ![Image](/screenshots/fragment_distortion.png)
 
-#####Initialization
+##### Initialization
 ```c++
 void VRApp:setup(){
   mHmd = Hmd::create(CardboardVersion::VERSION_2, false);
 }
 ```
 
-#####Render scene
+##### Render scene
 When using fragment distortion, you need to draw your scenes firstly into the fbo.
 ```c++
 void VRApp:update(){
@@ -82,5 +81,5 @@ void VRApp:draw(){
 }
 ```
 
-####Note
+#### Note
 Vertex and Fragment distortion usually yields different results. See the reading [VR DISTORTION CORRECTION USING VERTEX DISPLACEMENT](https://ustwo.com/blog/vr-distortion-correction-using-vertex-displacement), so this is uninteded that you mix 2 methods at the sametime. Therefore once the Hmd is created, you can not change the distortion method. 

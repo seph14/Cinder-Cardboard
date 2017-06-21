@@ -53,12 +53,13 @@ namespace cinder { namespace cardboard {
         
         static HmdRef create(CardboardVersion version = VERSION_2, bool initVertexDistortion = true);
         
+        void setCameraPosition(ci::vec3 pos);
         void setDefaultDirection(float angle);
         bool hasDirectionApplied();
         
         void setBackgroundColor(const ci::Color &color) { mBackgroundColor = color;}
         
-#if defined( CINDER_GL_ES )
+#if defined( CINDER_GL_ES_3 )
         void updateCamera(const app::InterfaceOrientation &orientation);
 #endif
         CameraStereo getCamera() { return mCamera; }
@@ -77,6 +78,7 @@ namespace cinder { namespace cardboard {
         float mDefaultAngle, mDesiredDirection;
         int  mMotionCount;
         ci::CameraStereo mCamera;
+        ci::gl::FboRef mRenderBuffer;
         
         std::string mDeviceName;
         
@@ -84,7 +86,6 @@ namespace cinder { namespace cardboard {
         ci::Color           mBackgroundColor;
         VertexDistorterRef  mDistorter;
         ci::gl::GlslProgRef mBarrelDistortionShader;
-        ci::gl::FboRef      mRenderBuffer;
         
         Eye   mCurrEye;
         float mWidthMeters;

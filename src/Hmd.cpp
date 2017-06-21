@@ -32,7 +32,60 @@
 #include "cinder/app/App.h"
 #include "cinder/Utilities.h"
 
-#if defined( CINDER_GL_ES )
+#ifdef CINDER_GL_ES_3
+#include "cinder/MotionManager.h"
+
+static const char* BarrelDistortionVertex =
+"#version 300 es\n"
+"uniform mat4 ciModelViewProjection;\n"
+"in vec4 ciPosition;\n"
+"in vec2 ciTexCoord0;\n"
+"out highp vec2	TexCoord;\n"
+"void main( void ) {\n"
+"   gl_Position	= ciModelViewProjection * ciPosition;\n"
+"   TexCoord	= ciTexCoord0;\n"
+"}\n";
+
+static const char* BarrelDistortionFrag =
+"#version 300 es\n"
+"precision highp float;\n"
+"uniform sampler2D tex0;\n"
+
+"uniform highp vec2 distortion;\n"
+"uniform highp vec4 backgroundColor;\n"
+"uniform highp vec4 projectionLeft;\n"
+"uniform highp vec4 unprojectionLeft;\n"
+
+"in highp vec2 TexCoord;\n"
+"out vec4 oColor;\n"
+
+"float poly(float val) {\n"
+"   return (val < 0.0000010) ? 10000.0 : (1.0 + (distortion.x + distortion.y * val) * val);\n"
+"}\n"
+
+"vec2 barrel(vec2 v, vec4 projection, vec4 unprojection) {\n"
+"   vec2 w = (v + unprojection.zw) / unprojection.xy;\n"
+"   return projection.xy * (poly(dot(w, w)) * w) - projection.zw;\n"
+"}\n"
+
+"void main() {\n"
+// right projections are shifted and vertically mirrored relative to left
+"   vec4 projectionRight = \n"
+"   (projectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);\n"
+"   vec4 unprojectionRight = \n"
+"   (unprojectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);\n"
+
+"   vec2 a = (TexCoord.x < 0.5) ? \n"
+"   barrel(vec2(TexCoord.x / 0.5, TexCoord.y), projectionLeft, unprojectionLeft) : \n"
+"   barrel(vec2((TexCoord.x - 0.5) / 0.5, TexCoord.y), projectionRight, unprojectionRight);\n"
+
+"   if (a.x < 0.0 || a.x > 1.0 || a.y < 0.0 || a.y > 1.0) {\n"
+"       oColor = backgroundColor;\n"
+"   } else {\n"
+"       oColor = texture(tex0, vec2(a.x * 0.5 + (TexCoord.x < 0.5 ? 0.0 : 0.5), a.y));\n"
+"   }\n"
+"}\n";
+#elif CINDER_GL_ES
 
 #include "cinder/MotionManager.h"
 
@@ -225,6 +278,7 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
     mScreenLensDistance = params.ScreenLensDistance;
     mDistortionCoefficients = params.DistortionCoefficients;
     mInverseCoefficients = params.InverseCoefficients;
+    mCurrEye = Eye::UNKNOWN;
     
     gl::enableVerticalSync(false);
     setFrameRate(60.f);
@@ -269,10 +323,15 @@ void Hmd::init(CardboardParams params, bool initVertexDistortion){
         gl::Texture2d::Format tfmt;
         tfmt.setMinFilter( GL_LINEAR );
         tfmt.setMagFilter( GL_LINEAR );
+        tfmt.setInternalFormat(GL_RGB8);
         gl::Fbo::Format fmt;
         fmt.setColorTextureFormat( tfmt );
         fmt.depthTexture();
-        mRenderBuffer = gl::Fbo::create( scrWidth, scrHeight, fmt );
+        try {
+            mRenderBuffer = gl::Fbo::create( scrWidth, scrHeight, fmt );
+        }catch( const std::exception& e ) {
+            console() << "FBO ERROR: " << e.what() << std::endl;
+        }
     }
     mUseVertexDistorter = initVertexDistortion;
     
@@ -329,6 +388,10 @@ void Hmd::setDefaultDirection(float angle){
 #endif
 }
 
+void Hmd::setCameraPosition(ci::vec3 pos){
+    mCamera.setEyePoint(pos);
+}
+
 const vec4 Hmd::projectionMatrixToVector(mat4 mat){
     vec4 res;
     const float *pSource = (const float*)glm::value_ptr(mat);
@@ -343,28 +406,24 @@ void Hmd::bindEye(Eye eye){
     
     auto width = toPixels(getWindowWidth());
     auto height= toPixels(getWindowHeight());
+
+    if(eye == Eye::LEFT){
+        mCamera.enableStereoLeft();
+        gl::viewport( 0, 0, width / 2, height );
+        if(mUseVertexDistorter){
+            mDistorter->updateWithFov(getFieldOfViewLeftEye());
+        }
+    }else{
+        mCamera.enableStereoRight();
+        gl::viewport( width / 2, 0, width / 2, height );
+        if(mUseVertexDistorter){
+            mDistorter->updateWithFov(getFieldOfViewRightEye());
+        }
+    }
     
     if(!mUseVertexDistorter && mCurrEye == Eye::UNKNOWN){
         mRenderBuffer->bindFramebuffer();
         gl::clear(Color(0,0,0));
-    }
-
-    if(eye == Eye::LEFT){
-        mCamera.enableStereoLeft();
-        if(mUseVertexDistorter){
-            gl::viewport( 0, 0, width / 2, height );
-            mDistorter->updateWithFov(getFieldOfViewLeftEye());
-        }else{
-            gl::viewport(0,0,mRenderBuffer->getWidth()/2,mRenderBuffer->getHeight());
-        }
-    }else{
-        mCamera.enableStereoRight();
-        if(mUseVertexDistorter){
-            gl::viewport( width / 2, 0, width / 2, height );
-            mDistorter->updateWithFov(getFieldOfViewRightEye());
-        }else {
-            gl::viewport(mRenderBuffer->getWidth()/2,0,mRenderBuffer->getWidth()/2,mRenderBuffer->getHeight());
-        }
     }
 
     mCurrEye = eye;
@@ -375,21 +434,20 @@ void Hmd::bindEye(Eye eye){
 
 void Hmd::unbind(){
     mCurrEye = Eye::UNKNOWN;
-    auto size = toPixels(getWindowSize());
-    gl::viewport(size);
-    gl::setMatricesWindow(size);
-    
     if(!mUseVertexDistorter){
         //render buffer to screen with barrel distortion shader
         mRenderBuffer->unbindFramebuffer();
     }
+    auto size = toPixels(getWindowSize());
+    gl::viewport(size);
+    gl::setMatricesWindow(size);
 }
 
 void Hmd::render(){
     gl::ScopedGlslProg scope(mBarrelDistortionShader);
-    mRenderBuffer->bindTexture(0);
+    gl::ScopedTextureBind texBind(mRenderBuffer->getColorTexture(), 0);
+    mBarrelDistortionShader->uniform("tex0", 0);
     gl::drawSolidRect(toPixels(getWindowBounds()));
-    mRenderBuffer->unbindTexture(0);
 }
 
 HmdRef Hmd::create(CardboardVersion version, bool initVertexDistortion){
